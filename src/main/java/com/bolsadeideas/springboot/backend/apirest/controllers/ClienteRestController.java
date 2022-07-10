@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bolsadeideas.springboot.backend.apirest.models.entity.Cliente;
@@ -109,7 +110,7 @@ public class ClienteRestController {
 	//@ResponseStatus(code = HttpStatus.CREATED)
 	public ResponseEntity<?> create(@RequestBody Cliente cliente) {
 		//Validación a recomendación del profesor, seteando el ID con nulo o cero para que no haga un "update" en vez que "insert"
-		if(cliente.getId() > 0) {
+		if(cliente.getId() != null && cliente.getId() > 0) {
 			cliente.setId(0L);
 			//cliente.setId(null);
 		}
