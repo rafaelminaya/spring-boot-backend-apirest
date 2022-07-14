@@ -12,6 +12,9 @@ import javax.persistence.PrePersist;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
 
 @Entity
 @Table(name = "clientes")
@@ -22,12 +25,22 @@ public class Cliente implements Serializable{
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	
+	/**
+	 * message : 
+	 * -Atributo que permite enviar un mensaje personalizado en las anotaciones (@NotEmpty, @Size, @Email) de validadción.
+	 * - Esto ya que los mensajes suelen ser generados en inglés, aunque por defecto lo ya lo tenemos en español.
+	 */
+	@NotEmpty(message = "no puede estar vacío.")	
+	@Size(min = 4, max = 255)
 	@Column(nullable = false)
 	private String nombre;
 	
+	@NotEmpty(message = "no puede estar vacío.")
+	@Size(min = 4, max = 255, message = "el tamaño tiene que estar entre 4 y 255")
 	private String apellido;
 	
+	@NotEmpty(message = "no puede estar vacío.")
+	@Email(message = "no es una direccón de correo bien formada") //validación de java para un formato correcto de email.
 	@Column(nullable = false, unique = true)
 	private String email;
 	
