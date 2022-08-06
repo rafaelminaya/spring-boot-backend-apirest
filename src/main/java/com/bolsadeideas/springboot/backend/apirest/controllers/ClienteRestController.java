@@ -10,6 +10,9 @@ import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -42,6 +45,28 @@ public class ClienteRestController {
 	public List<Cliente> index() {
 
 		return clienteService.findAll();
+	}
+	
+	/*
+	 * Listado paginado
+	 * 
+	 * PageRequest:
+	 * Tipo de dato concreto de la intefaz "Pageable". 
+	 * Esta es la clase de implementación para la interfaz "Pageable" que es lo esperado a recibir.
+	 * 
+	 * of(page, 4):
+	 * Método que contiene el número de páginas y el tamaño.
+	 * Primer argumento es el número de páginas(comienza en cero) y el segundo es la cantidad de registros a mostrar
+	 * 
+	 */
+	@GetMapping(value = "/clientes/page/{page}")
+	public Page<Cliente> index(@PathVariable Integer page) {
+		
+		//Instanciamos un objeto a enviar por argumento, del tipo de interfaz "Pageable" con su tipo de dato concreto "PageRequest".
+		Pageable pageable = PageRequest.of(page, 4);
+		
+		return clienteService.findAll(pageable);
+		//return clienteService.findAll(PageRequest.of(page, 4));
 	}
 
 	/*
@@ -121,7 +146,7 @@ public class ClienteRestController {
 	 * 
 	 * BindingResult : Inyectamos al método "create()" el objeto que contiene los
 	 * mensajes de error en la validación del "entity" "Cliente". Importante la
-	 * delclaración del "BindingResult" seguido del objeto a validar en la firma de
+	 * declaración del "BindingResult" luego del objeto a validar en la firma de
 	 * la función.
 	 * 
 	 */
@@ -190,7 +215,7 @@ public class ClienteRestController {
 
 	@PutMapping(value = "/clientes/{id}")
 	// @ResponseStatus(code = HttpStatus.CREATED)
-	// Importante la delclaración del "BindingResult" seguido del objeto a validar
+	// Importante la delclaración del "BindingResult" luego del objeto a validar
 	// en la firma de la función.
 	public ResponseEntity<?> update(@Valid @RequestBody Cliente cliente, BindingResult result, @PathVariable Long id) {
 

@@ -15,7 +15,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * 
  * @ComponentScan
  * Permite registrar y buscar todas los componentes de spring en el contenedor, 
- * es decir, las clases ue hayan sido anotadas con @Component, @Controller, @RestController, @Repository, @Service
+ * es decir, las clases que hayan sido anotadas con @Component, @Controller, @RestController, @Repository, @Service
  * 
  */
 @SpringBootApplication
