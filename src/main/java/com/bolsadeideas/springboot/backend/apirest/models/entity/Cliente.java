@@ -36,7 +36,7 @@ public class Cliente implements Serializable{
 	private String nombre;
 	
 	@NotEmpty(message = "no puede estar vacío.")
-	@Size(min = 4, max = 255, message = "el tamaño tiene que estar entre 4 y 255")
+	@Size(min = 3, max = 255, message = "el tamaño tiene que estar entre 3 y 255")
 	private String apellido;
 	
 	@NotEmpty(message = "no puede estar vacío.")
@@ -58,6 +58,9 @@ public class Cliente implements Serializable{
 		createAt = new Date();
 	}
 	*/
+	
+	private String foto;
+	
 	
 	// GETTERS AND SETTERS
 	public Long getId() {
@@ -89,6 +92,12 @@ public class Cliente implements Serializable{
 	}
 	public void setCreateAt(Date createAt) {
 		this.createAt = createAt;
+	}
+	public String getFoto() {
+		return foto;
+	}
+	public void setFoto(String foto) {
+		this.foto = foto;
 	}
 	
 	
