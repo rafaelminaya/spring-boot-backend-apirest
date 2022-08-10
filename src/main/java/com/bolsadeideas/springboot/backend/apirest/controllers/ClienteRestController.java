@@ -1,25 +1,17 @@
 package com.bolsadeideas.springboot.backend.apirest.controllers;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -42,6 +34,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.bolsadeideas.springboot.backend.apirest.models.entity.Cliente;
 import com.bolsadeideas.springboot.backend.apirest.models.services.IClienteService;
+import com.bolsadeideas.springboot.backend.apirest.models.services.IUploadFileService;
 
 /*
  * origins = {}
@@ -55,8 +48,9 @@ public class ClienteRestController {
 	@Autowired
 	private IClienteService clienteService;
 	
-	//Logger : Importado de "org.slf4j.Logger"
-	private final Logger log = LoggerFactory.getLogger(ClienteRestController.class);
+	//Servicio que implementa toda las funcionalidades de cargar/ver, copiar/subir, eliminar y obtener la ruta para la foto
+	@Autowired
+	private IUploadFileService uploadService;
 
 	@GetMapping(value = "/clientes")
 	public List<Cliente> index() {
@@ -295,17 +289,7 @@ public class ClienteRestController {
 			//Verificamos si el cliente ya tenía una foto para eliminarla
 			String nombreFotoAnterior = cliente.getFoto();
 			
-			if(nombreFotoAnterior != null && nombreFotoAnterior.length() > 0) {
-				Path rutaFotoAnterior = Paths.get("uploads").resolve(nombreFotoAnterior).toAbsolutePath();
-				
-				//Convertirmos el "rutaFotoAnterior" en un archivo
-				File archivoFotoAnterior = rutaFotoAnterior.toFile();
-				
-				//Eliminamos el archivo validándo su existencia (en caso exista y pueda ser leído)
-				if(archivoFotoAnterior.exists() && archivoFotoAnterior.canRead()) {
-					archivoFotoAnterior.delete();
-				}
-			}
+			uploadService.eliminar(nombreFotoAnterior);			
 			
 			// Spring Data por detrás valida que el cliente exista, así que no será
 			// necesario verificar la existencia de este ID.
@@ -340,32 +324,11 @@ public class ClienteRestController {
 		
 		//Validmos que exista la imagen
 		if(!archivo.isEmpty()) {
-			/*
-			 * UUID.randomUUID().toString() : Genera una cadena de caracteres aleatorio para concatenar al nombre del archivo y hacerlo único
-			 * archivo.getOriginalFilename() : Obtiene el nombre del archivo
-			 * replace(" ", "") : Reemplazamos un espacio en blanco por nada, para así borrar los posibles espacio vacíos del nombre del archivo.
-			 */
-			String nombreArchivo = UUID.randomUUID().toString() + "_" + archivo.getOriginalFilename().replace(" ", "");
 			
-			/*
-			 * Seleccionamos en nuestro equipo, una ruta externa a nuestro proyecto. 
-			 * En producción será un directorio físico del servidor. Este directorio no se almacenará dentro del WAR o JAR usados para el depoy.
-			 * "c://Temp//uploads" : Sería una alternetiva a "uploads".
-			 * 
-			 * resolve() : Permite concatenar el nombre de la carpeta con el nombre del archivo a subir, para definir la "ruta única" que necesita todo archivo.
-			 * 
-			 * Path : Importado de "java.nio.file.Path"
-			 */
-			Path rutaArchivo = Paths.get("uploads").resolve(nombreArchivo).toAbsolutePath(); //"c://Temp//uploads"
-			log.info(rutaArchivo.toString());
+			String nombreArchivo = null;
 			
-			/*
-			 * copy() : Función que permite copiar y pegar un archivo a la ruta escogida. Este método necesitará lanzar un try/catch, así que lo generamos.
-			 * "rutaArchivo" Es la ruta donde donde se copiará el archivo a subir.
-			 * 
-			 */
 			try {
-				Files.copy(archivo.getInputStream(), rutaArchivo);
+				nombreArchivo = uploadService.copiar(archivo);
 			} catch (IOException e) {				
 				response.put("mensaje", "Error al subir la imagen del cliente "+ nombreArchivo);
 				response.put("error", e.getMessage().concat(": ").concat(e.getCause().getMessage()));
@@ -376,17 +339,7 @@ public class ClienteRestController {
 			//Verificamos si el cliente ya tenía una foto para eliminarla
 			String nombreFotoAnterior = cliente.getFoto();
 			
-			if(nombreFotoAnterior != null && nombreFotoAnterior.length() > 0) {
-				Path rutaFotoAnterior = Paths.get("uploads").resolve(nombreFotoAnterior).toAbsolutePath();
-				
-				//Convertirmos el "rutaFotoAnterior" en un archivo
-				File archivoFotoAnterior = rutaFotoAnterior.toFile();
-				
-				//Eliminamos el archivo validándo su existencia (en caso exista y pueda ser leído)
-				if(archivoFotoAnterior.exists() && archivoFotoAnterior.canRead()) {
-					archivoFotoAnterior.delete();
-				}
-			}
+			uploadService.eliminar(nombreFotoAnterior);			
 			
 			//En caso todo lo anterior salga bien, guardamos el nombre de la foto.
 			cliente.setFoto(nombreArchivo);
@@ -419,27 +372,11 @@ public class ClienteRestController {
 	public ResponseEntity<Resource> verFoto(@PathVariable String nombreFoto){
 		
 		//Obtenemos la ruta del nombre del archivo del parámetro
-		Path rutaArchivo = Paths.get("uploads").resolve(nombreFoto).toAbsolutePath();
-		log.info(rutaArchivo.toString());
-		
-		//Creamos un recurso que contendrá a la imagen
 		Resource recurso = null;
-		
-		/*
-		 * Instanciamos un objeto de tipo "UrlResource" por medio de su constructor, 
-		 * enviando la ruta del archivo parseado a "uri" ya que es el tipo de dato aceptado por la firma del constructor.
-		 * Este constructor requiere de un try/catch el cual generaremos. 
-		 * Este lanzará una excepción "MalformedURLException" el cual se lanza cuando está mal formada la ruta URL del archivo.
-		 */
 		try {
-			recurso = new UrlResource(rutaArchivo.toUri());
-		} catch (MalformedURLException e) {
+			recurso = uploadService.cargar(nombreFoto);
+		}catch(MalformedURLException e) {
 			e.printStackTrace();
-		}
-		
-		//validamos que el recurso exista(haya sido registado correctamente)
-		if(!recurso.exists() && !recurso.isReadable()) {
-			throw new RuntimeException("No se pudo cargar la imagen: "+nombreFoto);
 		}
 		/*
 		 * Enviamos las cabeceras(http headers) a la respuesta para que el recurso sea forzado a poder ser descargado.
