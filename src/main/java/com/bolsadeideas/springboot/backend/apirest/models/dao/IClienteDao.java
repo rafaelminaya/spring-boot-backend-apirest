@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import com.bolsadeideas.springboot.backend.apirest.models.entity.Cliente;
+import com.bolsadeideas.springboot.backend.apirest.models.entity.Region;
 
 /*
  * JpaRepository : 
@@ -21,5 +22,9 @@ public interface IClienteDao extends JpaRepository<Cliente, Long>{
 	
 	//2° Opción Query Methods - Para listar clientes ordenados de forma descendente por id
 	public List<Cliente> findAllByOrderByIdDesc();
+	
+	//Consulta para las regiones
+	@Query("from Region" )
+	public List<Region> findAllRegiones();
 
 }
