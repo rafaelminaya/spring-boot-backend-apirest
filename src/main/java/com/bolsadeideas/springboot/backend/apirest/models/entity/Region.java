@@ -12,8 +12,7 @@ import javax.persistence.Table;
 @Table(name = "regiones")
 public class Region implements Serializable {
 
-	private static final long serialVersionUID = 1L;
-
+	// ATRIBUTOS
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -36,5 +35,7 @@ public class Region implements Serializable {
 	public void setNombre(String nombre) {
 		this.nombre = nombre;
 	}
+	
+	private static final long serialVersionUID = 1L;
 
 }

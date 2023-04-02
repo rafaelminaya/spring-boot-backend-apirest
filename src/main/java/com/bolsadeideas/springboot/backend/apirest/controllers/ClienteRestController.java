@@ -2,7 +2,6 @@ package com.bolsadeideas.springboot.backend.apirest.controllers;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -70,7 +70,7 @@ public class ClienteRestController {
 	 * Método que contiene el número de páginas y el tamaño.
 	 * Primer argumento es el número de páginas(comienza en cero) y el segundo es la cantidad de registros a mostrar
 	 * 
-	 */
+	 */	
 	@GetMapping(value = "/clientes/page/{page}")
 	public Page<Cliente> index(@PathVariable Integer page) {
 		
@@ -90,6 +90,7 @@ public class ClienteRestController {
 	 * ? : Este signo representa un tipo de dato genérico, que puede ser un objeto
 	 * de cualquier tipo de dato.
 	 */
+	@Secured({"ROLE_USER", "ROLE_ADMIN"})
 	@GetMapping(value = "/clientes/{id}")
 	// @ResponseStatus(code = HttpStatus.OK)
 	public ResponseEntity<?> show(@PathVariable Long id) {
@@ -162,9 +163,12 @@ public class ClienteRestController {
 	 * la función.
 	 * 
 	 */
+	@Secured("ROLE_ADMIN")
 	@PostMapping(value = "/clientes")
 	// @ResponseStatus(code = HttpStatus.CREATED)
 	public ResponseEntity<?> create(@Valid @RequestBody Cliente cliente, BindingResult result) {
+		
+		System.out.println("cliente-fecha: "+ cliente.getCreateAt());
 
 		// Validación a recomendación del profesor, seteando el ID con nulo o cero para
 		// que no haga un "update" en vez que "insert"
@@ -225,6 +229,7 @@ public class ClienteRestController {
 
 	}
 
+	@Secured("ROLE_ADMIN")
 	@PutMapping(value = "/clientes/{id}")
 	// @ResponseStatus(code = HttpStatus.CREATED)
 	// Importante la delclaración del "BindingResult" luego del objeto a validar
@@ -260,7 +265,8 @@ public class ClienteRestController {
 			clienteActual.setNombre(cliente.getNombre());
 			clienteActual.setApellido(cliente.getApellido());
 			clienteActual.setEmail(cliente.getEmail());
-			clienteActual.setCreateAt(new Date());
+			//clienteActual.setCreateAt(new Date());
+			clienteActual.setCreateAt(cliente.getCreateAt());
 			clienteActual.setRegion(cliente.getRegion());
 
 			clienteUpdated = clienteService.save(clienteActual);
@@ -279,6 +285,7 @@ public class ClienteRestController {
 		return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
 	}
 
+	@Secured("ROLE_ADMIN")
 	@DeleteMapping(value = "/clientes/{id}")
 	// @ResponseStatus(code = HttpStatus.NO_CONTENT)
 	public ResponseEntity<?> delete(@PathVariable Long id) {
@@ -317,6 +324,7 @@ public class ClienteRestController {
 	 * 
 	 * MultipartFile : Tipo de interfaz necesaria que representa un archivo a subir.
 	 */
+	@Secured({"ROLE_USER", "ROLE_ADMIN"})
 	@PostMapping(value = "/clientes/upload")
 	public ResponseEntity<?> upload(@RequestParam("archivo") MultipartFile archivo, @RequestParam("id") Long id ){
 		
@@ -370,6 +378,7 @@ public class ClienteRestController {
 	 * La forma de probar este enpoint es copiando y pegando la ruta en el navegador para obtener la foto
 	 * Ejemplo: http://localhost:8080/api/uploads/img/NOMBRE_IMAGEN
 	 */
+	
 	@GetMapping(value = "/uploads/img/{nombreFoto:.+}")
 	public ResponseEntity<Resource> verFoto(@PathVariable String nombreFoto){
 		
@@ -398,6 +407,7 @@ public class ClienteRestController {
 		return new ResponseEntity<Resource>(recurso, cabecera, HttpStatus.OK);
 	}
 	
+	@Secured("ROLE_ADMIN")
 	@GetMapping(value = "/clientes/regiones")
 	public List<Region> listaRegiones() {
 
